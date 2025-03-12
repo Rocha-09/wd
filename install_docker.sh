@@ -2,13 +2,13 @@
 
 # 更新包列表并安装必要的依赖
 sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
 
-# 添加Docker官方GPG密钥
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+# 添加Docker官方GPG密钥到新的密钥环
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # 添加Docker APT仓库
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # 更新包列表
 sudo apt-get update
