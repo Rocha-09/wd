@@ -13,6 +13,11 @@ sudo curl -L "https://github.com/docker/compose/releases/download/$COMPOSE_VERSI
 # 赋予可执行权限
 sudo chmod +x /usr/local/bin/docker-compose
 
+# 如果已存在符号链接或文件，则删除
+if [ -e /usr/bin/docker-compose ]; then
+    sudo rm /usr/bin/docker-compose
+fi
+
 # 创建符号链接到 /usr/bin
 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
