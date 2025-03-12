@@ -44,7 +44,6 @@ services:
     volumes:
       - ./letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait \$${!}; done;'"
 
 volumes:
   wordpress_data:
@@ -85,6 +84,10 @@ server {
     location / {
         return 301 https://\$host\$request_uri;
     }
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
 }
 
 server {
@@ -101,14 +104,13 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
 }
 EOF
 
 # 重新加载Nginx配置
 docker-compose exec nginx nginx -s reload
+
+# 配置Certbot自动续期的Cron作业
+(crontab -l ; echo "0 0 * * * docker-compose run --rm certbot renew && docker-compose exec nginx nginx -s reload") | crontab -
 
 echo "WordPress 已成功设置并运行在 https://$DOMAIN"
