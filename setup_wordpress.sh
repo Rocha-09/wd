@@ -50,6 +50,22 @@ volumes:
   db_data:
 EOF
 
+# 创建Nginx配置文件以处理ACME挑战
+cat <<EOF > ./nginx.conf
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+EOF
+
 # 创建并启动Docker服务
 docker-compose up -d
 
@@ -59,7 +75,7 @@ sleep 30
 # 使用Certbot获取SSL证书
 docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email
 
-# 配置Nginx以强制HTTP跳转到HTTPS
+# 更新Nginx配置以使用SSL
 cat <<EOF > ./nginx.conf
 server {
     listen 80;
@@ -67,10 +83,6 @@ server {
 
     location / {
         return 301 https://\$host\$request_uri;
-    }
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
     }
 }
 
