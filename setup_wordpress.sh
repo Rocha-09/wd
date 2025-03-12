@@ -7,9 +7,11 @@ EMAIL="ericshum2025@outlook.com"
 # 停止并移除现有的Docker服务
 docker-compose down
 
-# 删除现有的WordPress数据卷
+# 删除现有的WordPress、MySQL、Certbot和Nginx数据卷
 docker volume rm $(docker volume ls -qf name=wordpress_data)
 docker volume rm $(docker volume ls -qf name=db_data)
+docker volume rm $(docker volume ls -qf name=certbot_data)
+docker volume rm $(docker volume ls -qf name=nginx_data)
 
 # 创建docker-compose.yml文件
 cat <<EOF > docker-compose.yml
@@ -18,9 +20,6 @@ services:
     image: wordpress:latest
     depends_on:
       - db
-    ports:
-      - "80:80"
-      - "443:443"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -28,8 +27,6 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wordpress_data:/var/www/html
-      - ./letsencrypt:/etc/letsencrypt
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
 
   db:
     image: mysql:5.7
@@ -60,6 +57,8 @@ services:
 volumes:
   wordpress_data:
   db_data:
+  certbot_data:
+  nginx_data:
 EOF
 
 # 创建Nginx配置文件以处理ACME挑战
