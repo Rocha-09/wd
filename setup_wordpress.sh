@@ -1,3 +1,13 @@
+#!/bin/bash
+
+# 设置域名和邮箱
+DOMAIN="defenseconsulting.me"
+EMAIL="ericshum2025@outlook.com"
+
+# 创建docker-compose.yml文件
+cat <<EOF > docker-compose.yml
+version: '3.7'
+
 services:
   wordpress:
     image: wordpress:latest
@@ -39,3 +49,46 @@ volumes:
 networks:
   default:
     driver: bridge
+EOF
+
+# 创建并启动Docker服务
+docker-compose up -d
+
+# 等待WordPress和MySQL服务初始化
+sleep 30
+
+# 使用Certbot获取SSL证书
+docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email --staging
+
+# 配置Nginx以强制HTTP跳转到HTTPS
+cat <<EOF > ./nginx.conf
+server {
+    listen 80;
+    server_name $DOMAIN;
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name $DOMAIN;
+
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
+
+    location / {
+        proxy_pass http://wordpress:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOF
+
+# 重新加载Nginx配置
+docker-compose exec wordpress nginx -s reload
+
+echo "WordPress 已成功设置并运行在 https://$DOMAIN"
