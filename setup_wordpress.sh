@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置域名和邮箱
-DOMAIN="defenseconsulting.me"
+DOMAIN="defenseconsulting.co"
 EMAIL="ericshum2025@outlook.com"
 
 # 停止并移除现有的Docker服务
