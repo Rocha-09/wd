@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 停止所有正在运行的 Docker Compose 服务
+docker-compose down
+
 # 删除现有的 Docker Compose
 if [ -e /usr/local/bin/docker-compose ]; then
     sudo rm /usr/local/bin/docker-compose
@@ -23,6 +26,9 @@ sudo curl -L "https://github.com/docker/compose/releases/download/$COMPOSE_VERSI
 sudo chmod +x /usr/local/bin/docker-compose
 
 # 创建符号链接到 /usr/bin
+if [ -e /usr/bin/docker-compose ]; then
+    sudo rm /usr/bin/docker-compose
+fi
 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
 # 验证安装
