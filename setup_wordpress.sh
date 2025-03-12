@@ -4,11 +4,8 @@
 DOMAIN="defenseconsulting.co"
 EMAIL="ericshum2025@outlook.com"
 
-# 停止并移除现有的Docker服务
-docker-compose down
-
-# 列出所有卷并删除与WordPress、MySQL、Certbot和Nginx相关的卷
-docker volume rm wordpress_data db_data certbot_data nginx_data
+# 停止并移除现有的Docker服务、容器、镜像和卷
+docker stop $(docker ps -q) && docker rm $(docker ps -a -q) && docker rmi $(docker images -q) && docker volume rm $(docker volume ls -q)
 
 # 创建docker-compose.yml文件
 cat <<EOF > docker-compose.yml
