@@ -6,8 +6,6 @@ EMAIL="ericshum2025@outlook.com"
 
 # 创建docker-compose.yml文件
 cat <<EOF > docker-compose.yml
-version: '3.7'
-
 services:
   wordpress:
     image: wordpress:latest
@@ -58,7 +56,7 @@ docker-compose up -d
 sleep 30
 
 # 使用Certbot获取SSL证书
-docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email --staging
+docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email
 
 # 配置Nginx以强制HTTP跳转到HTTPS
 cat <<EOF > ./nginx.conf
