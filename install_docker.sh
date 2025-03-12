@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 卸载现有的Docker
+sudo apt-get remove -y docker docker-engine docker.io containerd runc
+
 # 更新包列表并安装必要的依赖
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
