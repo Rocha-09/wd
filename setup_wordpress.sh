@@ -7,11 +7,8 @@ EMAIL="ericshum2025@outlook.com"
 # 停止并移除现有的Docker服务
 docker-compose down
 
-# 删除现有的WordPress、MySQL、Certbot和Nginx数据卷
-docker volume rm $(docker volume ls -qf name=wordpress_data)
-docker volume rm $(docker volume ls -qf name=db_data)
-docker volume rm $(docker volume ls -qf name=certbot_data)
-docker volume rm $(docker volume ls -qf name=nginx_data)
+# 列出所有卷并删除与WordPress、MySQL、Certbot和Nginx相关的卷
+docker volume rm wordpress_data db_data certbot_data nginx_data
 
 # 创建docker-compose.yml文件
 cat <<EOF > docker-compose.yml
