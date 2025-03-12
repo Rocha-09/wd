@@ -13,7 +13,9 @@ services:
     image: wordpress:latest
     depends_on:
       - db
-      - nginx
+    ports:
+      - "80:80"
+      - "443:443"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -21,6 +23,8 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wordpress_data:/var/www/html
+      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
 
   db:
     image: mysql:5.7
@@ -31,18 +35,6 @@ services:
       MYSQL_ROOT_PASSWORD: root_password
     volumes:
       - db_data:/var/lib/mysql
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./letsencrypt:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    depends_on:
-      - wordpress
 
   certbot:
     image: certbot/certbot
@@ -59,15 +51,20 @@ networks:
     driver: bridge
 EOF
 
-# 创建Nginx配置文件
+# 创建并启动Docker服务
+docker-compose up -d
+
+# 等待WordPress和MySQL服务初始化
+sleep 30
+
+# 使用Certbot获取SSL证书
+docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email --staging
+
+# 配置Nginx以强制HTTP跳转到HTTPS
 cat <<EOF > ./nginx.conf
 server {
     listen 80;
     server_name $DOMAIN;
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
 
     location / {
         return 301 https://\$host\$request_uri;
@@ -91,16 +88,7 @@ server {
 }
 EOF
 
-# 启动Docker服务
-docker-compose up -d
-
-# 等待服务初始化
-sleep 30
-
-# 使用Certbot获取证书
-docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email
-
 # 重新加载Nginx配置
-docker-compose exec nginx nginx -s reload
+docker-compose exec wordpress nginx -s reload
 
 echo "WordPress 已成功设置并运行在 https://$DOMAIN"
