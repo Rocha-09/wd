@@ -72,7 +72,10 @@ docker-compose up -d
 # 等待服务初始化
 sleep 30
 
-# 使用Certbot获取SSL证书
+# 删除现有的证书
+docker-compose run --rm certbot delete --cert-name $DOMAIN
+
+# 使用Certbot获取新的SSL证书
 docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --no-eff-email
 
 # 更新Nginx配置以使用SSL
