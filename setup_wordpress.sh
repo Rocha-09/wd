@@ -14,7 +14,7 @@ services:
     depends_on:
       - db
     ports:
-      - "80:80"
+      - "8080:80"
       - "443:443"
     environment:
       WORDPRESS_DB_HOST: db:3306
@@ -74,7 +74,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
 
     location / {
-        proxy_pass http://wordpress:80;
+        proxy_pass http://wordpress:8080;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
