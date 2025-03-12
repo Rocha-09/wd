@@ -11,9 +11,6 @@ services:
     image: wordpress:latest
     depends_on:
       - db
-    ports:
-      - "80:80"
-      - "443:443"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -21,8 +18,6 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wordpress_data:/var/www/html
-      - ./letsencrypt:/etc/letsencrypt
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
 
   db:
     image: mysql:5.7
@@ -34,6 +29,16 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./letsencrypt:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
   certbot:
     image: certbot/certbot
     volumes:
@@ -43,16 +48,12 @@ services:
 volumes:
   wordpress_data:
   db_data:
-
-networks:
-  default:
-    driver: bridge
 EOF
 
 # 创建并启动Docker服务
 docker-compose up -d
 
-# 等待WordPress和MySQL服务初始化
+# 等待服务初始化
 sleep 30
 
 # 使用Certbot获取SSL证书
@@ -66,6 +67,10 @@ server {
 
     location / {
         return 301 https://\$host\$request_uri;
+    }
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
     }
 }
 
@@ -87,6 +92,6 @@ server {
 EOF
 
 # 重新加载Nginx配置
-docker-compose exec wordpress nginx -s reload
+docker-compose exec nginx nginx -s reload
 
 echo "WordPress 已成功设置并运行在 https://$DOMAIN"
